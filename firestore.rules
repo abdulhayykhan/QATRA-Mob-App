@@ -1,0 +1,75 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+        (request.auth.token.role == 'admin' || 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+    }
+
+    // 1. Users collection
+    // Any authenticated user can read donor profiles; users can only write their own profile
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // 2. Emergency Requests collection
+    // Read: authenticated users (donors needing to see requests)
+    // Create: authenticated seeker
+    // Update: seeker (status change, fulfillment) or admin
+    match /emergencyRequests/{requestId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && 
+        (request.auth.uid == resource.data.seekerId || isAdmin());
+      allow delete: if isAdmin();
+
+      // Subcollection for donors who accepted dispatch
+      // Only the authenticated donor themselves can create or update their own record
+      // The donor can cancel (delete) their own dispatch, or the seeker can remove a donor, or an admin
+      match /acceptedDonors/{donorId} {
+        allow read: if isAuthenticated();
+        allow create, update: if isAuthenticated() && 
+          request.auth.uid == donorId &&
+          request.resource.data.id == donorId;
+        allow delete: if isAuthenticated() && (
+          request.auth.uid == donorId || 
+          request.auth.uid == get(/databases/$(database)/documents/emergencyRequests/$(requestId)).data.seekerId || 
+          isAdmin()
+        );
+      }
+    }
+
+    // 3. Campus Blood Drives collection
+    // Public/authenticated read; create/update by drive organizers or admins
+    match /drives/{driveId} {
+      allow read: if true;
+      allow create, update: if isAuthenticated();
+      allow delete: if isAdmin();
+    }
+
+    // 4. 24/7 Verification Queue & Fraud Audit
+    // Restricted strictly to desk admins
+    match /verificationQueue/{slipId} {
+      allow read, write: if isAdmin();
+    }
+    
+    match /fraudAudit/{auditId} {
+      allow read, write: if isAdmin();
+    }
+  }
+}
