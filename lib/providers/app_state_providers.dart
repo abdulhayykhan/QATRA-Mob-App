@@ -5,6 +5,7 @@ import '../core/services/auth_repository.dart';
 import '../core/services/drives_repository.dart';
 import '../core/services/emergency_requests_repository.dart';
 import '../core/services/location_service.dart';
+import '../core/services/verification_repository.dart';
 
 final locationServiceProvider = Provider<LocationService>((ref) {
   return LocationService();
@@ -52,6 +53,15 @@ final drivesRepositoryProvider = Provider<DrivesRepository>((ref) {
 final campusDrivesStreamProvider = StreamProvider<List<DriveEvent>>((ref) {
   final repo = ref.watch(drivesRepositoryProvider);
   return repo.getUpcomingDrivesStream();
+});
+
+final verificationRepositoryProvider = Provider<VerificationRepository>((ref) {
+  return VerificationRepository();
+});
+
+final pendingVerificationSlipsStreamProvider = StreamProvider<List<VerificationSlip>>((ref) {
+  final repo = ref.watch(verificationRepositoryProvider);
+  return repo.getPendingSlipsStream();
 });
 
 // Current User State Provider
@@ -244,6 +254,16 @@ final campusDrivesProvider = Provider<List<DriveEvent>>((ref) {
     return DriveEvent.seedDrives;
   }
   final asyncVal = ref.watch(campusDrivesStreamProvider);
+  return asyncVal.value ?? const [];
+});
+
+// 24/7 Verification Desk Queue Provider
+final pendingVerificationSlipsProvider = Provider<List<VerificationSlip>>((ref) {
+  final isDemoMode = ref.watch(isDemoModeProvider);
+  if (isDemoMode) {
+    return VerificationSlip.seedSlips;
+  }
+  final asyncVal = ref.watch(pendingVerificationSlipsStreamProvider);
   return asyncVal.value ?? const [];
 });
 

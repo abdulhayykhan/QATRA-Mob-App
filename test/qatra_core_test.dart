@@ -5,6 +5,7 @@ import 'package:qatra_app/core/models/user_models.dart';
 import 'package:qatra_app/core/services/drives_repository.dart';
 import 'package:qatra_app/core/services/emergency_requests_repository.dart';
 import 'package:qatra_app/core/services/location_service.dart';
+import 'package:qatra_app/core/services/verification_repository.dart';
 import 'package:qatra_app/core/utils/cnic_validator.dart';
 import 'package:qatra_app/core/utils/distance_calculator.dart';
 import 'package:qatra_app/providers/app_state_providers.dart';
@@ -536,6 +537,123 @@ void main() {
       expect(updatedUser.currentLng, closeTo(LocationService.defaultKarachiLng, 0.0001));
     });
   });
+
+  group('DriveEvent and DrivesRepository Tests', () {
+    test('Serializes and deserializes organizerId correctly', () {
+      final drive = DriveEvent(
+        id: 'drv-99',
+        title: 'Tech Campus Drive',
+        organizer: 'Tech Society',
+        organizerId: 'usr-organizer-123',
+        universityCampus: 'Fast NUCES',
+        venue: 'Main Auditorium',
+        date: DateTime(2026, 5, 20),
+        time: '10:00 AM - 04:00 PM',
+        targetUnits: 120,
+        registeredDonors: 45,
+        registeredVolunteers: 12,
+        description: 'Test blood drive description',
+      );
+
+      final map = drive.toMap();
+      expect(map['organizerId'], equals('usr-organizer-123'));
+
+      final reconstructed = DriveEvent.fromMap(map, 'drv-99');
+      expect(reconstructed.organizerId, equals('usr-organizer-123'));
+      expect(reconstructed.title, equals('Tech Campus Drive'));
+    });
+
+    test('DrivesRepository fallback when Firebase is not initialized', () async {
+      final repo = DrivesRepository();
+      expect(repo.isFirebaseAvailable, isFalse);
+
+      final stream = repo.getUpcomingDrivesStream();
+      final items = await stream.toList();
+      expect(items, isEmpty);
+
+      // Verify createDrive, updateDrive, deleteDrive do not throw when offline
+      final drive = DriveEvent.seedDrives.first;
+      await expectLater(repo.createDrive(drive), completes);
+      await expectLater(repo.updateDrive(drive), completes);
+      await expectLater(repo.deleteDrive(drive.id), completes);
+    });
+  });
+
+  group('VerificationSlip and VerificationRepository Tests', () {
+    test('Serializes and deserializes VerificationSlip correctly', () {
+      final slip = VerificationSlip(
+        id: 'REQ-1234',
+        seekerId: 'seeker-user-456',
+        hospital: 'Aga Khan University Hospital',
+        doctorStamp: 'Trauma Consultant Stamp (Approved)',
+        mrn: 'MRN-99881',
+        bloodGroup: BloodGroup.oNegative,
+        units: '2 Bags',
+        deskReviewStatus: 'Submitted for Verification Desk Review',
+        flagged: false,
+        createdAt: DateTime(2026, 3, 10, 14, 30),
+      );
+
+      final map = slip.toMap();
+      expect(map['id'], equals('REQ-1234'));
+      expect(map['seekerId'], equals('seeker-user-456'));
+      expect(map['hospital'], equals('Aga Khan University Hospital'));
+      expect(map['bloodGroup'], equals('O-'));
+      expect(map['units'], equals('2 Bags'));
+      expect(map['deskReviewStatus'], equals('Submitted for Verification Desk Review'));
+      expect(map['flagged'], isFalse);
+
+      final reconstructed = VerificationSlip.fromMap(map, 'REQ-1234');
+      expect(reconstructed.id, equals('REQ-1234'));
+      expect(reconstructed.seekerId, equals('seeker-user-456'));
+      expect(reconstructed.bloodGroup, equals(BloodGroup.oNegative));
+      expect(reconstructed.flagged, isFalse);
+    });
+
+    test('VerificationSlip seed data is well-formed', () {
+      expect(VerificationSlip.seedSlips, isNotEmpty);
+      for (final slip in VerificationSlip.seedSlips) {
+        expect(slip.id, startsWith('REQ-'));
+        expect(slip.seekerId, isNotEmpty);
+        expect(slip.hospital, isNotEmpty);
+        expect(slip.doctorStamp, isNotEmpty);
+      }
+    });
+
+    test('VerificationRepository fallback when Firebase is not initialized', () async {
+      final repo = VerificationRepository();
+      expect(repo.isFirebaseAvailable, isFalse);
+
+      final stream = repo.getPendingSlipsStream();
+      final items = await stream.toList();
+      expect(items, isEmpty);
+
+      final slip = VerificationSlip.seedSlips.first;
+      await expectLater(repo.submitSlip(slip), completes);
+      await expectLater(repo.approveSlip(slip.id), completes);
+      await expectLater(repo.rejectSlip(slip.id, 'Test rejection reason'), completes);
+    });
+
+    test('Default mode does NOT inject seed verification slips', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      expect(container.read(isDemoModeProvider), isFalse);
+      final slips = container.read(pendingVerificationSlipsProvider);
+      expect(slips, isEmpty);
+    });
+
+    test('Demo mode explicitly toggles seed verification slips', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      container.read(isDemoModeProvider.notifier).state = true;
+      final slips = container.read(pendingVerificationSlipsProvider);
+      expect(slips, isNotEmpty);
+      expect(slips.length, equals(VerificationSlip.seedSlips.length));
+    });
+  });
 }
+
 
 

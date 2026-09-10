@@ -68,16 +68,13 @@ service cloud.firestore {
     }
 
     // 3. Campus Blood Drives collection
-    // Public read; create by authenticated users; update/delete by drive organizer or admin
+    // Public read; create by organizer or admin; update/delete by drive organizer or admin
     match /drives/{driveId} {
       allow read: if true;
-      allow create: if isAuthenticated();
+      allow create: if isAuthenticated() && 
+        (request.resource.data.organizerId == request.auth.uid || isAdmin());
       allow update, delete: if isAuthenticated() && 
-        (
-          isAdmin() ||
-          request.auth.uid == resource.data.organizerId ||
-          request.auth.uid == resource.data.organizer
-        );
+        (request.auth.uid == resource.data.organizerId || isAdmin());
     }
 
     // 4. 24/7 Verification Queue & Fraud Audit

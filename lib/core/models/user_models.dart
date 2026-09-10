@@ -187,6 +187,7 @@ class DriveEvent {
   final String id;
   final String title;
   final String organizer;
+  final String organizerId;
   final String universityCampus;
   final String venue;
   final DateTime date;
@@ -200,6 +201,7 @@ class DriveEvent {
     required this.id,
     required this.title,
     required this.organizer,
+    this.organizerId = '',
     required this.universityCampus,
     required this.venue,
     required this.date,
@@ -215,6 +217,7 @@ class DriveEvent {
       'id': id,
       'title': title,
       'organizer': organizer,
+      'organizerId': organizerId,
       'universityCampus': universityCampus,
       'venue': venue,
       'date': date.toIso8601String(),
@@ -242,6 +245,7 @@ class DriveEvent {
       id: id ?? map['id'] ?? '',
       title: map['title'] ?? 'Campus Blood Drive',
       organizer: map['organizer'] ?? 'Alkhidmat Youth Chapter',
+      organizerId: map['organizerId'] ?? '',
       universityCampus: map['universityCampus'] ?? 'Karachi University Campus',
       venue: map['venue'] ?? 'Main Campus Ground',
       date: parseDate(map['date']),
@@ -258,6 +262,7 @@ class DriveEvent {
       id: 'drive-01',
       title: 'DUET Annual Life-Saver Blood Drive',
       organizer: 'Alkhidmat Youth DUET Chapter',
+      organizerId: 'usr-admin-duet',
       universityCampus: 'Dawood University of Eng & Tech (DUET)',
       venue: 'Main Campus Gymnasium, Jamshed Town, Karachi',
       date: DateTime.now().add(const Duration(days: 3)),
@@ -271,6 +276,7 @@ class DriveEvent {
       id: 'drive-02',
       title: 'NED Spring Blood Camp 2026',
       organizer: 'NED Social Welfare Society',
+      organizerId: 'usr-admin-ned',
       universityCampus: 'NED University of Eng & Tech',
       venue: 'Student Activity Center, University Rd',
       date: DateTime.now().add(const Duration(days: 7)),
@@ -284,6 +290,7 @@ class DriveEvent {
       id: 'drive-03',
       title: 'KU Campus Awareness & Donation Drive',
       organizer: 'Alkhidmat Foundation Youth Wing',
+      organizerId: 'usr-admin-ku',
       universityCampus: 'University of Karachi (KU)',
       venue: 'Arts Lobby, Main Campus',
       date: DateTime.now().add(const Duration(days: 12)),
@@ -292,6 +299,117 @@ class DriveEvent {
       registeredDonors: 98,
       registeredVolunteers: 22,
       description: 'Campus-wide donation and awareness seminar addressing donation myths and emergency preparedness.',
+    ),
+  ];
+}
+
+class VerificationSlip {
+  final String id;
+  final String seekerId;
+  final String hospital;
+  final String doctorStamp;
+  final String mrn;
+  final BloodGroup bloodGroup;
+  final String units;
+  final String deskReviewStatus;
+  final bool flagged;
+  final String flagReason;
+  final DateTime createdAt;
+
+  const VerificationSlip({
+    required this.id,
+    required this.seekerId,
+    required this.hospital,
+    required this.doctorStamp,
+    required this.mrn,
+    required this.bloodGroup,
+    required this.units,
+    required this.deskReviewStatus,
+    this.flagged = false,
+    this.flagReason = '',
+    required this.createdAt,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'seekerId': seekerId,
+      'hospital': hospital,
+      'doctorStamp': doctorStamp,
+      'mrn': mrn,
+      'bloodGroup': bloodGroup.label,
+      'units': units,
+      'deskReviewStatus': deskReviewStatus,
+      'flagged': flagged,
+      'flagReason': flagReason,
+      'createdAt': createdAt.toIso8601String(),
+    };
+  }
+
+  factory VerificationSlip.fromMap(Map<String, dynamic> map, [String? id]) {
+    DateTime parseDate(dynamic d) {
+      if (d == null) return DateTime.now();
+      if (d is DateTime) return d;
+      if (d is String) return DateTime.tryParse(d) ?? DateTime.now();
+      try {
+        return (d as dynamic).toDate();
+      } catch (_) {
+        return DateTime.now();
+      }
+    }
+
+    return VerificationSlip(
+      id: id ?? map['id'] ?? '',
+      seekerId: map['seekerId'] ?? '',
+      hospital: map['hospital'] ?? 'Unknown Hospital',
+      doctorStamp: map['doctorStamp'] ?? 'Unverified Stamp',
+      mrn: map['mrn'] ?? 'MRN-UNKNOWN',
+      bloodGroup: BloodGroup.fromString(map['bloodGroup'] ?? 'O+'),
+      units: map['units'] ?? '1 Bag',
+      deskReviewStatus: map['deskReviewStatus'] ?? 'Submitted for Desk Review',
+      flagged: map['flagged'] == true,
+      flagReason: map['flagReason'] ?? '',
+      createdAt: parseDate(map['createdAt']),
+    );
+  }
+
+  static final List<VerificationSlip> seedSlips = [
+    VerificationSlip(
+      id: 'REQ-8821',
+      seekerId: 'seeker-seed-01',
+      hospital: 'JPMC Karachi',
+      doctorStamp: 'Detected (Dr. Tariq Mahmood)',
+      mrn: 'MRN-44918',
+      bloodGroup: BloodGroup.oNegative,
+      units: '2 Bags',
+      deskReviewStatus: 'Submitted for Desk Review',
+      flagged: false,
+      createdAt: DateTime.now().subtract(const Duration(minutes: 15)),
+    ),
+    VerificationSlip(
+      id: 'REQ-8824',
+      seekerId: 'seeker-seed-02',
+      hospital: 'Civil Hospital Karachi',
+      doctorStamp: 'Faint / Blurred Stamp',
+      mrn: 'MRN-7782A',
+      bloodGroup: BloodGroup.bPositive,
+      units: '1 Bag',
+      deskReviewStatus: 'Under Review by Alkhidmat Desk',
+      flagged: true,
+      flagReason: 'Doctor stamp clarity low - Phone confirmation with hospital required',
+      createdAt: DateTime.now().subtract(const Duration(minutes: 42)),
+    ),
+    VerificationSlip(
+      id: 'REQ-8825',
+      seekerId: 'seeker-seed-03',
+      hospital: 'Indus Hospital',
+      doctorStamp: 'Detected (Dr. Ayesha)',
+      mrn: 'MRN-2219B',
+      bloodGroup: BloodGroup.aPositive,
+      units: '3 Bags',
+      deskReviewStatus: 'Submitted for Desk Review',
+      flagged: false,
+      createdAt: DateTime.now().subtract(const Duration(hours: 1, minutes: 10)),
     ),
   ];
 }

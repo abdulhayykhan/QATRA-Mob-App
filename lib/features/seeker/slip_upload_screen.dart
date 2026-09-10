@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/models/blood_models.dart';
+import '../../core/models/user_models.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/app_state_providers.dart';
 import 'request_status_screen.dart';
@@ -78,6 +79,21 @@ class _SlipUploadScreenState extends ConsumerState<SlipUploadScreen> {
             );
 
             ref.read(emergencyRequestsRepositoryProvider).createRequest(newRequest);
+
+            // Submit slip to 24/7 Verification Queue in Firestore
+            final verificationSlip = VerificationSlip(
+              id: newRequest.id,
+              seekerId: user.id.isNotEmpty ? user.id : 'seeker-curr',
+              hospital: widget.hospital.name,
+              doctorStamp: 'Trauma Consultant Stamp (Approved)',
+              mrn: 'MRN-88412',
+              bloodGroup: widget.bloodGroup,
+              units: '${widget.units} Bag${widget.units > 1 ? 's' : ''}',
+              deskReviewStatus: 'Submitted for Verification Desk Review',
+              flagged: false,
+              createdAt: DateTime.now(),
+            );
+            ref.read(verificationRepositoryProvider).submitSlip(verificationSlip);
 
             Navigator.pushReplacement(
               context,

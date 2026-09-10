@@ -38,4 +38,26 @@ class DrivesRepository {
       rethrow;
     }
   }
+
+  /// Update an existing campus blood drive
+  Future<void> updateDrive(DriveEvent drive) async {
+    if (_firestore == null) return;
+    try {
+      await _firestore.collection('drives').doc(drive.id).update(drive.toMap());
+    } catch (e) {
+      debugPrint('DrivesRepository.updateDrive error: $e');
+      rethrow;
+    }
+  }
+
+  /// Delete a campus blood drive
+  Future<void> deleteDrive(String driveId) async {
+    if (_firestore == null) return;
+    try {
+      await _firestore.collection('drives').doc(driveId).delete();
+    } catch (e) {
+      debugPrint('DrivesRepository.deleteDrive error: $e');
+      rethrow;
+    }
+  }
 }
