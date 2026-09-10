@@ -90,37 +90,37 @@ To ensure QATRA can be deployed and operated sustainably by non-profit foundatio
 QATRA utilizes a unidirectional reactive architecture powered by **Flutter**, **Riverpod**, and **Cloud Firestore**:
 
 ```mermaid
-graph TD
-    subgraph Client Layer [Flutter Mobile App - Riverpod]
-        UI[UI Screens & Widgets]
-        VM[Riverpod State Providers]
-        Repo[Repository Layer]
+flowchart TD
+    subgraph Client_Layer["Client Layer (Flutter Mobile App)"]
+        UI["UI Screens & Widgets"]
+        VM["Riverpod State Providers"]
+        Repo["Repository Layer"]
     end
 
-    subgraph Firebase Cloud [Spark Free Plan]
-        Auth[Firebase Authentication\nGoogle Sign-In]
-        FS_Users[(Firestore:\n/users/{userId})]
-        FS_Req[(Firestore:\n/emergencyRequests/{requestId})]
-        FS_Donors[(Firestore:\n/emergencyRequests/{requestId}/acceptedDonors/{donorId})]
-        FS_Drives[(Firestore:\n/drives/{driveId})]
-        FS_Desk[(Firestore:\n/verificationQueue/{slipId})]
+    subgraph Firebase_Cloud["Firebase Cloud (Spark Free Plan)"]
+        Auth["Firebase Authentication<br/>Google Sign-In"]
+        FS_Users[("Firestore: users collection")]
+        FS_Req[("Firestore: emergencyRequests")]
+        FS_Donors[("Firestore: acceptedDonors subcollection")]
+        FS_Drives[("Firestore: drives collection")]
+        FS_Desk[("Firestore: verificationQueue")]
     end
 
-    subgraph Native OS Integration
-        Dialer[Native Phone Dialer\ntel:+92...]
-        Nav[Google Maps / Navigation Intent]
+    subgraph Native_OS["Native OS Integration"]
+        Dialer["Native Phone Dialer<br/>tel:+92..."]
+        Nav["Google Maps / Navigation Intent"]
     end
 
-    UI -->|Watches State| VM
-    VM -->|Invokes Commands| Repo
-    Repo -->|Direct Token Auth| Auth
-    Repo -->|Stream / Write| FS_Req
-    Repo -->|Stream / Write| FS_Donors
-    Repo -->|Stream / Write| FS_Users
-    Repo -->|Stream / Write| FS_Drives
-    Repo -->|Admin Review| FS_Desk
-    UI -->|url_launcher| Dialer
-    UI -->|url_launcher| Nav
+    UI -->|"Watches State"| VM
+    VM -->|"Invokes Commands"| Repo
+    Repo -->|"Direct Token Auth"| Auth
+    Repo -->|"Stream / Write"| FS_Req
+    Repo -->|"Stream / Write"| FS_Donors
+    Repo -->|"Stream / Write"| FS_Users
+    Repo -->|"Stream / Write"| FS_Drives
+    Repo -->|"Admin Review"| FS_Desk
+    UI -->|"url_launcher"| Dialer
+    UI -->|"url_launcher"| Nav
 ```
 
 ---
@@ -518,10 +518,10 @@ NEXT_TAG="v${MAJOR}.${MINOR}.${PATCH}"
 
 ```mermaid
 sequenceDiagram
-    participant Dev as Developer
-    participant GH as GitHub Repository (main)
-    participant Runner as GitHub Actions Runner (Ubuntu)
-    participant Release as GitHub Releases
+    participant Dev as "Developer"
+    participant GH as "GitHub Repository (main)"
+    participant Runner as "GitHub Actions Runner (Ubuntu)"
+    participant Release as "GitHub Releases"
 
     Dev->>GH: git push origin main
     GH->>Runner: Trigger Workflow (build-release-apk.yml)
