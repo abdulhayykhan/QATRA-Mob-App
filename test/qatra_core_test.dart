@@ -4,11 +4,14 @@ import 'package:qatra_app/core/models/blood_models.dart';
 import 'package:qatra_app/core/models/user_models.dart';
 import 'package:qatra_app/core/services/drives_repository.dart';
 import 'package:qatra_app/core/services/emergency_requests_repository.dart';
+import 'package:qatra_app/core/services/location_service.dart';
 import 'package:qatra_app/core/utils/cnic_validator.dart';
 import 'package:qatra_app/core/utils/distance_calculator.dart';
 import 'package:qatra_app/providers/app_state_providers.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('Blood Compatibility Tests', () {
     test('O- Negative is Universal Donor', () {
       expect(BloodGroup.oNegative.compatibleRecipients.length, equals(8));
@@ -492,5 +495,47 @@ void main() {
       expect(drives.length, equals(DriveEvent.seedDrives.length));
     });
   });
+
+  group('LocationService & Geolocation Tests', () {
+    test('Default Karachi coordinates constant validation', () {
+      expect(LocationService.defaultKarachiLat, closeTo(24.8607, 0.0001));
+      expect(LocationService.defaultKarachiLng, closeTo(67.0011, 0.0001));
+    });
+
+    test('LocationService fallback returns Karachi center when platform channel is uninitialized', () async {
+      final service = LocationService();
+      // In flutter_test headless environment without native mocking, getCurrentPosition catches platform exception and safely falls back
+      final coords = await service.getCoordinatesWithFallback();
+      expect(coords.lat, closeTo(LocationService.defaultKarachiLat, 0.0001));
+      expect(coords.lng, closeTo(LocationService.defaultKarachiLng, 0.0001));
+    });
+
+    test('UserNotifier.updateLocation updates user state coordinates', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final notifier = container.read(userProvider.notifier);
+      notifier.updateLocation(24.9056, 67.0822); // Gulshan-e-Iqbal
+
+      final updatedUser = container.read(userProvider);
+      expect(updatedUser.currentLat, equals(24.9056));
+      expect(updatedUser.currentLng, equals(67.0822));
+    });
+
+    test('UserNotifier.refreshLiveLocation integrates with LocationService fallback', () async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final service = container.read(locationServiceProvider);
+      final notifier = container.read(userProvider.notifier);
+
+      await notifier.refreshLiveLocation(service);
+
+      final updatedUser = container.read(userProvider);
+      expect(updatedUser.currentLat, closeTo(LocationService.defaultKarachiLat, 0.0001));
+      expect(updatedUser.currentLng, closeTo(LocationService.defaultKarachiLng, 0.0001));
+    });
+  });
 }
+
 

@@ -4,6 +4,11 @@ import '../core/models/user_models.dart';
 import '../core/services/auth_repository.dart';
 import '../core/services/drives_repository.dart';
 import '../core/services/emergency_requests_repository.dart';
+import '../core/services/location_service.dart';
+
+final locationServiceProvider = Provider<LocationService>((ref) {
+  return LocationService();
+});
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepository();
@@ -132,6 +137,17 @@ class UserNotifier extends StateNotifier<UserProfile> {
       cnic: cnic,
       isCnicVerified: cnic != null && cnic.isNotEmpty,
     );
+    _syncToFirestore();
+  }
+
+  void updateLocation(double lat, double lng) {
+    state = state.copyWith(currentLat: lat, currentLng: lng);
+    _syncToFirestore();
+  }
+
+  Future<void> refreshLiveLocation(LocationService locationService) async {
+    final coords = await locationService.getCoordinatesWithFallback();
+    state = state.copyWith(currentLat: coords.lat, currentLng: coords.lng);
     _syncToFirestore();
   }
 

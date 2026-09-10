@@ -20,10 +20,23 @@ service cloud.firestore {
 
     // 1. Users collection
     // Any authenticated user can read donor profiles; users can only write their own profile
+    // Privilege escalation prevention: only admins can promote 'role' or approve 'isCnicVerified'
     match /users/{userId} {
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && request.auth.uid == userId;
-      allow update: if isOwner(userId) || isAdmin();
+      allow create: if isAuthenticated() && 
+        request.auth.uid == userId && 
+        request.resource.data.id == userId &&
+        request.resource.data.isCnicVerified == false &&
+        request.resource.data.role in ['guest', 'seeker', 'donor', 'driveOrganizer'];
+      allow update: if isAuthenticated() && 
+        (
+          isAdmin() || 
+          (
+            isOwner(userId) && 
+            !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'isCnicVerified']) &&
+            request.resource.data.id == userId
+          )
+        );
       allow delete: if isAdmin();
     }
 
@@ -55,17 +68,24 @@ service cloud.firestore {
     }
 
     // 3. Campus Blood Drives collection
-    // Public/authenticated read; create/update by drive organizers or admins
+    // Public read; create by authenticated users; update/delete by drive organizer or admin
     match /drives/{driveId} {
       allow read: if true;
-      allow create, update: if isAuthenticated();
-      allow delete: if isAdmin();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && 
+        (
+          isAdmin() ||
+          request.auth.uid == resource.data.organizerId ||
+          request.auth.uid == resource.data.organizer
+        );
     }
 
     // 4. 24/7 Verification Queue & Fraud Audit
-    // Restricted strictly to desk admins
+    // Seekers can submit their own slips for desk review; desk admins review, approve/reject, and audit
     match /verificationQueue/{slipId} {
-      allow read, write: if isAdmin();
+      allow read: if isAdmin() || (isAuthenticated() && resource.data.seekerId == request.auth.uid);
+      allow create: if isAuthenticated() && request.resource.data.seekerId == request.auth.uid;
+      allow update, delete: if isAdmin();
     }
     
     match /fraudAudit/{auditId} {

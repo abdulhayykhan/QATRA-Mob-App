@@ -96,6 +96,28 @@ class _LiveMapScreenState extends ConsumerState<LiveMapScreen> {
           },
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.my_location_rounded),
+            tooltip: 'Live GPS Location',
+            onPressed: () async {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Acquiring live GPS coordinates...'),
+                  duration: Duration(seconds: 1),
+                ),
+              );
+              await ref.read(userProvider.notifier).refreshLiveLocation(ref.read(locationServiceProvider));
+              if (context.mounted) {
+                final userLoc = ref.read(userProvider);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Live GPS: ${userLoc.currentLat.toStringAsFixed(4)}, ${userLoc.currentLng.toStringAsFixed(4)}'),
+                    backgroundColor: const Color(0xFF1E293B),
+                  ),
+                );
+              }
+            },
+          ),
           // Concentric Radius Filter (5km / 10km / 15km)
           PopupMenuButton<int>(
             icon: const Icon(Icons.tune_rounded),
