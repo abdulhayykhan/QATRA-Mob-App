@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/cnic_validator.dart';
 import '../../providers/app_state_providers.dart';
+import '../../widgets/qatra_logo.dart';
 import '../health/health_checklist_screen.dart';
 
 class CnicBindingScreen extends ConsumerStatefulWidget {
@@ -47,7 +48,7 @@ class _CnicBindingScreenState extends ConsumerState<CnicBindingScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('QATRA', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryDarkRed)),
+        title: const QatraBrandHeader(),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),

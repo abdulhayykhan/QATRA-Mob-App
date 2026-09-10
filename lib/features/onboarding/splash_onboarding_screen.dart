@@ -44,31 +44,25 @@ class SplashOnboardingScreen extends ConsumerWidget {
 
               // Brand Blood Drop Icon / Logo
               Container(
-                width: 100,
-                height: 100,
+                width: 108,
+                height: 108,
                 decoration: BoxDecoration(
-                  color: AppColors.primaryLightRed,
+                  color: Colors.white,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primaryRed.withOpacity(0.18),
-                      blurRadius: 20,
+                      color: AppColors.primaryRed.withOpacity(0.22),
+                      blurRadius: 24,
                       offset: const Offset(0, 8),
                     ),
                   ],
                 ),
-                child: Center(
-                  child: Container(
-                    width: 70,
-                    height: 70,
-                    decoration: const BoxDecoration(
-                      color: AppColors.primaryRed,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.bloodtype_rounded,
-                      color: Colors.white,
-                      size: 42,
+                child: ClipOval(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Image.asset(
+                      'media/logo.png',
+                      fit: BoxFit.contain,
                     ),
                   ),
                 ),

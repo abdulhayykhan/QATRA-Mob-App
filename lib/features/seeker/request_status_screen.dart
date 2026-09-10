@@ -4,6 +4,7 @@ import '../../core/models/blood_models.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/app_state_providers.dart';
 import '../../widgets/status_badges.dart';
+import '../../widgets/qatra_logo.dart';
 import 'matchmaker_dashboard_screen.dart';
 
 class RequestStatusScreen extends ConsumerWidget {
@@ -15,7 +16,7 @@ class RequestStatusScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('QATRA', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryDarkRed)),
+        title: const QatraBrandHeader(),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),

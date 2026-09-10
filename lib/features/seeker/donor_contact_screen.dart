@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/models/blood_models.dart';
 import '../../core/theme/app_theme.dart';
+import '../../widgets/qatra_logo.dart';
 import 'donation_complete_screen.dart';
 
 class DonorContactScreen extends StatelessWidget {
@@ -43,7 +44,7 @@ class DonorContactScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('QATRA', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryDarkRed)),
+        title: const QatraBrandHeader(),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),

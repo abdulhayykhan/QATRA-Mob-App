@@ -4,6 +4,7 @@ import '../../core/models/blood_models.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/distance_calculator.dart';
 import '../../providers/app_state_providers.dart';
+import '../../widgets/qatra_logo.dart';
 import '../donor/cooldown_screen.dart';
 
 class NavigationRoutingScreen extends ConsumerWidget {
@@ -31,7 +32,7 @@ class NavigationRoutingScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('QATRA', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryDarkRed)),
+        title: const QatraBrandHeader(),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),

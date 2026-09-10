@@ -74,16 +74,27 @@ class _GoogleAuthScreenState extends ConsumerState<GoogleAuthScreen> {
               const SizedBox(height: 12),
               // Brand Icon
               Container(
-                width: 72,
-                height: 72,
-                decoration: const BoxDecoration(
-                  color: AppColors.primaryLightRed,
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: Colors.white,
                   shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primaryRed.withOpacity(0.18),
+                      blurRadius: 16,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                child: const Icon(
-                  Icons.bloodtype_rounded,
-                  color: AppColors.primaryRed,
-                  size: 38,
+                child: ClipOval(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Image.asset(
+                      'media/logo.png',
+                      fit: BoxFit.contain,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 18),

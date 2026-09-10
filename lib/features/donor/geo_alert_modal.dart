@@ -4,6 +4,7 @@ import '../../core/models/blood_models.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/distance_calculator.dart';
 import '../../providers/app_state_providers.dart';
+import '../../widgets/qatra_logo.dart';
 import '../map/live_map_screen.dart';
 
 class GeoAlertModal extends ConsumerWidget {
@@ -71,15 +72,7 @@ class GeoAlertModal extends ConsumerWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: const BoxDecoration(
-                    color: AppColors.primaryLightRed,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.water_drop, color: AppColors.primaryRed, size: 22),
-                ),
+                const QatraLogo(size: 38),
                 const SizedBox(width: 10),
                 Text(
                   '${request.bloodGroup.label} Needed Immediately',

@@ -6,6 +6,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/distance_calculator.dart';
 import '../../providers/app_state_providers.dart';
 import '../../widgets/status_badges.dart';
+import '../../widgets/qatra_logo.dart';
 import 'donor_contact_screen.dart';
 
 class MatchmakerDashboardScreen extends ConsumerWidget {
@@ -37,7 +38,7 @@ class MatchmakerDashboardScreen extends ConsumerWidget {
             return Scaffold(
               backgroundColor: AppColors.background,
               appBar: AppBar(
-                title: const Text('QATRA', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryDarkRed)),
+                title: const QatraBrandHeader(),
                 leading: IconButton(
                   icon: const Icon(Icons.arrow_back),
                   onPressed: () => Navigator.pop(context),
@@ -158,15 +159,7 @@ Widget _buildDonorCard(BuildContext context, MatchedDonor donor, EmergencyReques
               children: [
                 Row(
                   children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: const BoxDecoration(
-                        color: AppColors.primaryLightRed,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.water_drop_rounded, color: AppColors.primaryRed, size: 20),
-                    ),
+                    const QatraLogo(size: 36),
                     const SizedBox(width: 10),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/app_state_providers.dart';
+import '../../widgets/qatra_logo.dart';
 import '../awareness/awareness_screen.dart';
 
 class CooldownScreen extends ConsumerWidget {
@@ -16,7 +17,7 @@ class CooldownScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('QATRA', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryDarkRed)),
+        title: const QatraBrandHeader(),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),

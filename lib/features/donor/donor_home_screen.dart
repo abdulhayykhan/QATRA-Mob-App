@@ -6,6 +6,7 @@ import '../../providers/app_state_providers.dart';
 import '../../widgets/status_badges.dart';
 import '../../widgets/role_switch_sheet.dart';
 import '../../widgets/qatra_bottom_nav.dart';
+import '../../widgets/qatra_logo.dart';
 import 'geo_alert_modal.dart';
 import 'cooldown_screen.dart';
 import '../map/live_map_screen.dart';
@@ -45,20 +46,7 @@ class _DonorHomeScreenState extends ConsumerState<DonorHomeScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(4),
-              decoration: const BoxDecoration(
-                color: AppColors.primaryRed,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.water_drop, color: Colors.white, size: 16),
-            ),
-            const SizedBox(width: 8),
-            const Text('QATRA', style: TextStyle(fontWeight: FontWeight.w900, color: AppColors.primaryDarkRed)),
-          ],
-        ),
+        title: const QatraBrandHeader(),
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_none_rounded),

@@ -1,11 +1,11 @@
 {
-    "name": "qatra_app",
-    "short_name": "qatra_app",
+    "name": "QATRA",
+    "short_name": "QATRA",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#B91C1C",
+    "theme_color": "#B91C1C",
+    "description": "QATRA — Emergency Blood Response Platform",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
