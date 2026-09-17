@@ -5,6 +5,7 @@ import 'package:qatra_app/core/models/user_models.dart';
 import 'package:qatra_app/core/services/drives_repository.dart';
 import 'package:qatra_app/core/services/emergency_requests_repository.dart';
 import 'package:qatra_app/core/services/location_service.dart';
+import 'package:qatra_app/core/services/supabase_service.dart';
 import 'package:qatra_app/core/services/verification_repository.dart';
 import 'package:qatra_app/core/utils/cnic_validator.dart';
 import 'package:qatra_app/core/utils/distance_calculator.dart';
@@ -846,6 +847,49 @@ If you can donate or know someone who can, please respond via QATRA Emergency Bl
       final helplineUri = Uri.parse('tel:1021');
       expect(helplineUri.scheme, equals('tel'));
       expect(helplineUri.path, equals('1021'));
+    });
+  });
+
+  group('Supabase Hybrid PostgreSQL Integration Tests', () {
+    test('SupabaseService constants and endpoints are properly configured', () {
+      expect(SupabaseService.supabaseUrl, equals('https://talimcuofkvphkvreryo.supabase.co'));
+      expect(SupabaseService.supabaseAnonKey.startsWith('eyJ'), isTrue);
+    });
+
+    test('SupabaseService handles uninitialized or offline state safely without throwing', () async {
+      // In offline/unit test sandbox, client access should be null-safe
+      final client = SupabaseService.client;
+      // If uninitialized, client should be null and not throw
+      if (!SupabaseService.isInitialized) {
+        expect(client, isNull);
+      }
+
+      // recordRequestAudit and recordFraudAudit should safely no-op when client is null
+      await expectLater(
+        SupabaseService.recordRequestAudit(
+          requestId: 'REQ-AUDIT-TEST',
+          seekerId: 'seeker-1',
+          seekerName: 'Test Seeker',
+          hospitalId: 'HOSP-1',
+          bloodGroup: 'B+',
+          component: 'PRBC',
+          units: 2,
+          urgency: 'Immediate',
+        ),
+        completes,
+      );
+
+      await expectLater(
+        SupabaseService.recordFraudAudit(
+          requestId: 'REQ-AUDIT-TEST',
+          cnic: '42101-1234567-1',
+          phone: '03001234567',
+          mrn: 'MRN-999',
+          reason: 'Test fraud detection pattern',
+          confidence: 'High',
+        ),
+        completes,
+      );
     });
   });
 }

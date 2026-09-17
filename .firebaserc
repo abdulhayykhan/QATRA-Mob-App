@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "default": "qatra-mob-app",
+    "mobile": "qatra-mob-app",
+    "web": "qatra-web-app"
+  }
+}

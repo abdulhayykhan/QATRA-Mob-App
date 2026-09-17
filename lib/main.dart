@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/models/user_models.dart';
+import 'core/services/supabase_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/onboarding/splash_onboarding_screen.dart';
 import 'features/donor/donor_home_screen.dart';
@@ -16,6 +17,11 @@ void main() async {
     await Firebase.initializeApp();
   } catch (e) {
     debugPrint('Firebase.initializeApp() notice: $e');
+  }
+  try {
+    await SupabaseService.initialize();
+  } catch (e) {
+    debugPrint('SupabaseService.initialize() notice: $e');
   }
   runApp(
     const ProviderScope(
