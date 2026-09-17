@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/models/blood_models.dart';
 import '../../core/models/user_models.dart';
 import '../../core/theme/app_theme.dart';
@@ -120,7 +121,9 @@ class ProfileScreen extends ConsumerWidget {
                       const Divider(height: 20),
                       _buildProfileRow(
                         'CNIC Status',
-                        user.isCnicVerified ? CnicValidator.maskCnic(user.cnic ?? '42101-1234567-1') : 'Unverified',
+                        user.isCnicVerified
+                            ? (user.cnic != null && user.cnic!.isNotEmpty ? CnicValidator.maskCnic(user.cnic!) : 'Verified')
+                            : (user.cnic != null && user.cnic!.isNotEmpty ? 'Pending Review' : 'Unverified'),
                         Icons.badge_outlined,
                         trailingAction: user.isCnicVerified
                             ? const VerifiedBadge(text: 'Verified')
@@ -131,7 +134,10 @@ class ProfileScreen extends ConsumerWidget {
                                     MaterialPageRoute(builder: (_) => const CnicBindingScreen()),
                                   );
                                 },
-                                child: const Text('Verify Now', style: TextStyle(color: AppColors.primaryRed, fontSize: 12)),
+                                child: Text(
+                                  user.cnic != null && user.cnic!.isNotEmpty ? 'Update CNIC' : 'Verify Now',
+                                  style: const TextStyle(color: AppColors.primaryRed, fontSize: 12),
+                                ),
                               ),
                       ),
                       const Divider(height: 20),
@@ -176,10 +182,17 @@ class ProfileScreen extends ConsumerWidget {
                       title: const Text('Alkhidmat Emergency Helpline', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                       subtitle: const Text('Dial 112 or 1021 for 24/7 ambulance & blood support', style: TextStyle(fontSize: 12)),
                       trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Dialing Alkhidmat Emergency Helpline 112 / 1021...')),
-                        );
+                      onTap: () async {
+                        final uri = Uri.parse('tel:1021');
+                        try {
+                          await launchUrl(uri);
+                        } catch (_) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Dialing Alkhidmat Emergency Helpline 1021...')),
+                            );
+                          }
+                        }
                       },
                     ),
                   ],
@@ -213,6 +226,25 @@ class ProfileScreen extends ConsumerWidget {
                     Text('Switch User Persona (Donor / Seeker / Admin)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                   ],
                 ),
+              ),
+              const SizedBox(height: 12),
+
+              // Sign Out Button
+              OutlinedButton.icon(
+                onPressed: () async {
+                  await ref.read(userProvider.notifier).signOut();
+                  if (context.mounted) {
+                    Navigator.of(context).popUntil((route) => route.isFirst);
+                  }
+                },
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.primaryRed,
+                  side: const BorderSide(color: AppColors.primaryRed),
+                  minimumSize: const Size.fromHeight(48),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+                icon: const Icon(Icons.logout_rounded, size: 18),
+                label: const Text('Sign Out', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
               ),
             ],
           ),

@@ -14,9 +14,15 @@ class DonationCompleteScreen extends ConsumerStatefulWidget {
 
 class _DonationCompleteScreenState extends ConsumerState<DonationCompleteScreen> {
   int _rating = 5;
-  final TextEditingController _noteController = TextEditingController(
-    text: 'May Allah reward the donor for arriving promptly at JPMC and saving our patient in under 15 minutes!',
-  );
+  late final TextEditingController _noteController;
+
+  @override
+  void initState() {
+    super.initState();
+    _noteController = TextEditingController(
+      text: 'May Allah reward the donor for arriving promptly at ${widget.request.hospital.name} and saving our patient!',
+    );
+  }
 
   @override
   void dispose() {

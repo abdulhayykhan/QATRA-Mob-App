@@ -20,7 +20,7 @@ service cloud.firestore {
 
     // 1. Users collection
     // Any authenticated user can read donor profiles; users can only write their own profile
-    // Privilege escalation prevention: only admins can promote 'role' or approve 'isCnicVerified'
+    // Privilege escalation prevention: users can change regular roles, but cannot self-elevate to admin or self-verify CNIC
     match /users/{userId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() && 
@@ -33,7 +33,8 @@ service cloud.firestore {
           isAdmin() || 
           (
             isOwner(userId) && 
-            !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'isCnicVerified']) &&
+            request.resource.data.role != 'admin' &&
+            !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isCnicVerified']) &&
             request.resource.data.id == userId
           )
         );

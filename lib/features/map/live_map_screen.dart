@@ -39,7 +39,7 @@ class _LiveMapScreenState extends ConsumerState<LiveMapScreen> {
 
     final myDonorRecord = MatchedDonor(
       id: user.id.isNotEmpty ? user.id : 'donor-me',
-      donorName: '${user.fullName} (You)',
+      donorName: user.fullName.isNotEmpty ? user.fullName : 'Verified Donor',
       bloodGroup: req.bloodGroup,
       distanceKm: distanceKm,
       etaMinutes: etaMinutes,

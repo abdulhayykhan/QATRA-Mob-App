@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/models/blood_models.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/distance_calculator.dart';
@@ -95,14 +96,16 @@ class NavigationRoutingScreen extends ConsumerWidget {
                             child: const Icon(Icons.navigation_rounded, color: AppColors.primaryRed, size: 36),
                           ),
                           const SizedBox(height: 12),
-                          const Text(
-                            'Navigating toward JPMC Blood Bank',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.textDark),
+                          Text(
+                            'Navigating toward ${request.hospital.name}',
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.textDark),
+                            textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 4),
-                          const Text(
-                            'Rafiqui H.J. Shaheed Rd, Karachi Cantt',
-                            style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+                          Text(
+                            request.hospital.address,
+                            style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+                            textAlign: TextAlign.center,
                           ),
                         ],
                       ),
@@ -167,10 +170,19 @@ class NavigationRoutingScreen extends ConsumerWidget {
 
                   // Open in Google Maps Button
                   ElevatedButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Opening turn-by-turn navigation to ${request.hospital.name}...')),
+                    onPressed: () async {
+                      final navUri = Uri.parse(
+                        'https://www.google.com/maps/dir/?api=1&destination=${request.hospital.latitude},${request.hospital.longitude}',
                       );
+                      try {
+                        await launchUrl(navUri, mode: LaunchMode.externalApplication);
+                      } catch (_) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Opening directions to ${request.hospital.name}...')),
+                          );
+                        }
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF1E293B),

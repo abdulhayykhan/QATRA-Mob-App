@@ -40,7 +40,11 @@ class RequestStatusScreen extends ConsumerWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const VerifiedBadge(text: 'Verified Request #REQ-8821'),
+                          VerifiedBadge(
+                            text: (request.status == RequestStatus.verified || request.status == RequestStatus.broadcasting)
+                                ? 'Verified Request #${request.id}'
+                                : 'Request #${request.id}',
+                          ),
                           UrgencyBadge(urgency: request.urgency),
                         ],
                       ),

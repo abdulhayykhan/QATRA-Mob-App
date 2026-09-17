@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
+import '../../providers/app_state_providers.dart';
 
-class FraudAuditScreen extends StatefulWidget {
+class FraudAuditScreen extends ConsumerStatefulWidget {
   const FraudAuditScreen({super.key});
 
   @override
-  State<FraudAuditScreen> createState() => _FraudAuditScreenState();
+  ConsumerState<FraudAuditScreen> createState() => _FraudAuditScreenState();
 }
 
-class _FraudAuditScreenState extends State<FraudAuditScreen> {
+class _FraudAuditScreenState extends ConsumerState<FraudAuditScreen> {
   final List<Map<String, dynamic>> _flaggedRecords = [
     {
       'id': 'REQ-9942',
@@ -41,14 +43,19 @@ class _FraudAuditScreenState extends State<FraudAuditScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDemoMode = ref.watch(isDemoModeProvider);
+    final displayedRecords = isDemoMode ? _flaggedRecords : const <Map<String, dynamic>>[];
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Fraud Audit & Blacklist', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: Navigator.canPop(context)
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -59,11 +66,11 @@ class _FraudAuditScreenState extends State<FraudAuditScreen> {
               // Summary KPI Counters (Wireframe Screen 22)
               Row(
                 children: [
-                  _buildKpiCard('12', 'Flagged Submissions', const Color(0xFFEF4444), const Color(0xFFFEF2F2)),
+                  _buildKpiCard(isDemoMode ? '12' : '0', 'Flagged Submissions', const Color(0xFFEF4444), const Color(0xFFFEF2F2)),
                   const SizedBox(width: 10),
-                  _buildKpiCard('4', 'Duplicate MRNs', const Color(0xFFF59E0B), const Color(0xFFFFFBEB)),
+                  _buildKpiCard(isDemoMode ? '4' : '0', 'Duplicate MRNs', const Color(0xFFF59E0B), const Color(0xFFFFFBEB)),
                   const SizedBox(width: 10),
-                  _buildKpiCard('7', 'Suspended Accounts', const Color(0xFF6B7280), const Color(0xFFF3F4F6)),
+                  _buildKpiCard(isDemoMode ? '7' : '0', 'Suspended Accounts', const Color(0xFF6B7280), const Color(0xFFF3F4F6)),
                 ],
               ),
               const SizedBox(height: 20),
@@ -83,14 +90,41 @@ class _FraudAuditScreenState extends State<FraudAuditScreen> {
               const Text('Flagged Cases & Policy Violations', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
               const SizedBox(height: 12),
 
-              ..._flaggedRecords.map((item) {
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              if (displayedRecords.isEmpty)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: const Column(
+                    children: [
+                      Icon(Icons.verified_user_outlined, size: 40, color: Color(0xFF2E7D32)),
+                      SizedBox(height: 10),
+                      Text(
+                        'No Policy Violations Detected',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.textDark),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'All verified slips, CNIC bindings, and donor dispatches in the system comply with Alkhidmat emergency guidelines.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 12, color: AppColors.textMuted, height: 1.4),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                ...displayedRecords.map((item) {
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,

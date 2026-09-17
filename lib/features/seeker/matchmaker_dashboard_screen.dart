@@ -104,14 +104,7 @@ class MatchmakerDashboardScreen extends ConsumerWidget {
 
                       // Share Verified Card to WhatsApp Button
                       OutlinedButton(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Structured Blood Request link copied for WhatsApp sharing!'),
-                              backgroundColor: Color(0xFF25D366),
-                            ),
-                          );
-                        },
+                        onPressed: () => _shareToWhatsApp(context, currentRequest),
                         style: OutlinedButton.styleFrom(
                           minimumSize: const Size.fromHeight(52),
                           side: const BorderSide(color: Color(0xFF25D366), width: 1.5),
@@ -144,7 +137,35 @@ class MatchmakerDashboardScreen extends ConsumerWidget {
     );
   }
 
-Widget _buildDonorCard(BuildContext context, MatchedDonor donor, EmergencyRequest currentRequest) {
+  Future<void> _shareToWhatsApp(BuildContext context, EmergencyRequest req) async {
+    final message = '''
+🚨 *URGENT BLOOD REQUISITION — QATRA* 🚨
+Blood Group: *${req.bloodGroup.label}* (${req.component.label})
+Required Units: *${req.unitsRequired}*
+Urgency: *${req.urgency.description}*
+Hospital: *${req.hospital.name}*
+Address: ${req.hospital.address}
+Status: *Verified by Alkhidmat Verification Desk* (REQ #${req.id})
+
+If you can donate or know someone who can, please respond via QATRA Emergency Blood Response or contact the desk immediately.
+'''.trim();
+
+    final uri = Uri.parse('https://wa.me/?text=${Uri.encodeComponent(message)}');
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not open WhatsApp. Request details copied.'),
+            backgroundColor: Color(0xFF25D366),
+          ),
+        );
+      }
+    }
+  }
+
+  Widget _buildDonorCard(BuildContext context, MatchedDonor donor, EmergencyRequest currentRequest) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 2,

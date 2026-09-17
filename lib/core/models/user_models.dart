@@ -56,7 +56,23 @@ class UserProfile {
     this.currentLng = 67.0011,
   });
 
-  bool get isOnCooldown => cooldownDaysRemaining > 0;
+  bool get isOnCooldown {
+    if (cooldownDaysRemaining > 0) return true;
+    if (lastDonationDate != null) {
+      final elapsed = DateTime.now().difference(lastDonationDate!).inDays;
+      return elapsed < 90;
+    }
+    return false;
+  }
+
+  int get effectiveCooldownDaysRemaining {
+    if (lastDonationDate != null) {
+      final elapsed = DateTime.now().difference(lastDonationDate!).inDays;
+      final remaining = 90 - elapsed;
+      return remaining > 0 ? remaining : 0;
+    }
+    return cooldownDaysRemaining > 0 ? cooldownDaysRemaining : 0;
+  }
 
   UserProfile copyWith({
     String? id,

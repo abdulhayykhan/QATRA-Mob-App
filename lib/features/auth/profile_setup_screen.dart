@@ -17,9 +17,9 @@ class ProfileSetupScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
-  final TextEditingController _nameController = TextEditingController(text: 'Abdul Hayy Khan');
-  final TextEditingController _ageController = TextEditingController(text: '22');
-  final TextEditingController _cnicController = TextEditingController(text: '42101-1234567-1');
+  late final TextEditingController _nameController;
+  late final TextEditingController _ageController;
+  late final TextEditingController _cnicController;
 
   String _gender = 'M';
   String _selectedDistrict = 'Karachi South';
@@ -34,6 +34,19 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     'Malir',
     'Keamari',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    final user = ref.read(userProvider);
+    _nameController = TextEditingController(text: user.fullName);
+    _ageController = TextEditingController();
+    _cnicController = TextEditingController(text: user.cnic ?? '');
+    _selectedBloodGroup = user.bloodGroup;
+    if (_karachiDistricts.contains(user.district)) {
+      _selectedDistrict = user.district;
+    }
+  }
 
   @override
   void dispose() {

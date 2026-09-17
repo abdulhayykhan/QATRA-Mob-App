@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/models/blood_models.dart';
 import '../../core/theme/app_theme.dart';
+import '../../widgets/role_switch_sheet.dart';
 import 'slip_upload_screen.dart';
 
 class CreateRequestScreen extends StatefulWidget {
@@ -23,10 +24,30 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('New Emergency Request', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: Navigator.canPop(context)
+            ? IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () {
+                  if (Navigator.canPop(context)) Navigator.pop(context);
+                },
+              )
+            : null,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.swap_horiz_rounded, color: AppColors.primaryRed),
+            tooltip: 'Switch Persona',
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                ),
+                builder: (_) => const RoleSwitchSheet(),
+              );
+            },
+          ),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(

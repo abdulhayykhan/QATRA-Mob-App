@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
+import '../../providers/app_state_providers.dart';
+import '../../widgets/role_switch_sheet.dart';
 
-class DriveManagementScreen extends StatefulWidget {
+class DriveManagementScreen extends ConsumerStatefulWidget {
   const DriveManagementScreen({super.key});
 
   @override
-  State<DriveManagementScreen> createState() => _DriveManagementScreenState();
+  ConsumerState<DriveManagementScreen> createState() => _DriveManagementScreenState();
 }
 
-class _DriveManagementScreenState extends State<DriveManagementScreen> {
+class _DriveManagementScreenState extends ConsumerState<DriveManagementScreen> {
   final List<Map<String, dynamic>> _attendees = [
     {
       'name': 'Ali Zain (CS-2021)',
@@ -35,14 +38,36 @@ class _DriveManagementScreenState extends State<DriveManagementScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDemoMode = ref.watch(isDemoModeProvider);
+    final drives = ref.watch(campusDrivesProvider);
+    final displayedAttendees = isDemoMode ? _attendees : const <Map<String, dynamic>>[];
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Campus Drive Management', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: Navigator.canPop(context)
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.swap_horiz_rounded, color: AppColors.primaryRed),
+            tooltip: 'Switch Persona',
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                ),
+                builder: (_) => const RoleSwitchSheet(),
+              );
+            },
+          ),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -53,11 +78,11 @@ class _DriveManagementScreenState extends State<DriveManagementScreen> {
               // Dashboard Metrics Header (Wireframe Screen 23)
               Row(
                 children: [
-                  _buildMetricCard('6', 'Drives Scheduled', Icons.event_note, const Color(0xFF2563EB)),
+                  _buildMetricCard('${drives.length}', 'Drives Scheduled', Icons.event_note, const Color(0xFF2563EB)),
                   const SizedBox(width: 10),
-                  _buildMetricCard('420', 'Pre-Screened Donors', Icons.people_alt, const Color(0xFF7C3AED)),
+                  _buildMetricCard(isDemoMode ? '420' : '0', 'Pre-Screened Donors', Icons.people_alt, const Color(0xFF7C3AED)),
                   const SizedBox(width: 10),
-                  _buildMetricCard('850', 'Target Collection', Icons.water_drop, AppColors.primaryRed),
+                  _buildMetricCard(isDemoMode ? '850' : '0', 'Target Collection', Icons.water_drop, AppColors.primaryRed),
                 ],
               ),
               const SizedBox(height: 20),
@@ -134,50 +159,77 @@ class _DriveManagementScreenState extends State<DriveManagementScreen> {
               // Attendee Roster Table
               const Text('Pre-Screened Attendee Roster', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
               const SizedBox(height: 10),
-              ..._attendees.map((att) {
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 10),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  child: Padding(
-                    padding: const EdgeInsets.all(14),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 18,
-                          backgroundColor: att['eligible'] ? const Color(0xFFE8F5E9) : const Color(0xFFFEE2E2),
-                          child: Icon(
-                            att['eligible'] ? Icons.check : Icons.close,
-                            color: att['eligible'] ? const Color(0xFF2E7D32) : AppColors.primaryRed,
-                            size: 18,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(att['name'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                              const SizedBox(height: 2),
-                              Text(
-                                'CNIC: ${att['cnic']} • Screening: ${att['screening']}',
-                                style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Text(
-                          att['status'],
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: att['eligible'] ? const Color(0xFF15803D) : AppColors.primaryRed,
-                          ),
-                        ),
-                      ],
-                    ),
+              if (displayedAttendees.isEmpty)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.border),
                   ),
-                );
-              }),
+                  child: const Column(
+                    children: [
+                      Icon(Icons.person_search_outlined, size: 36, color: AppColors.textLight),
+                      SizedBox(height: 8),
+                      Text(
+                        'No Checked-in Attendees Yet',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.textDark),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Scan student QR passes or conduct health screenings at the desk to register live attendees.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                ...displayedAttendees.map((att) {
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    child: Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 18,
+                            backgroundColor: att['eligible'] ? const Color(0xFFE8F5E9) : const Color(0xFFFEE2E2),
+                            child: Icon(
+                              att['eligible'] ? Icons.check : Icons.close,
+                              color: att['eligible'] ? const Color(0xFF2E7D32) : AppColors.primaryRed,
+                              size: 18,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(att['name'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'CNIC: ${att['cnic']} • Screening: ${att['screening']}',
+                                  style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Text(
+                            att['status'],
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: att['eligible'] ? const Color(0xFF15803D) : AppColors.primaryRed,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
             ],
           ),
         ),

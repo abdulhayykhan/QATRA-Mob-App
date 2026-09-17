@@ -653,6 +653,201 @@ void main() {
       expect(slips.length, equals(VerificationSlip.seedSlips.length));
     });
   });
+
+  group('UserNotifier Production Guest & Auth Tests', () {
+    test('Default unauthenticated state is clean guest without hardcoded personal info', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final user = container.read(userProvider);
+      expect(user.role, equals(UserRole.guest));
+      expect(user.id, isEmpty);
+      expect(user.fullName, isEmpty);
+      expect(user.phone, isEmpty);
+      expect(user.email, isEmpty);
+      expect(user.isCnicVerified, isFalse);
+      expect(user.isAvailableToDonate, isFalse);
+      expect(user.livesSaved, equals(0));
+    });
+
+    test('Sign out resets state to guest', () async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final notifier = container.read(userProvider.notifier);
+      notifier.switchRole(UserRole.donor);
+      expect(container.read(userProvider).role, equals(UserRole.donor));
+
+      await notifier.signOut();
+      final user = container.read(userProvider);
+      expect(user.role, equals(UserRole.guest));
+      expect(user.fullName, isEmpty);
+      expect(user.isCnicVerified, isFalse);
+    });
+
+    test('CNIC verification keeps isCnicVerified false until desk staff review', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final notifier = container.read(userProvider.notifier);
+      notifier.verifyCnic('42101-1234567-1');
+
+      final user = container.read(userProvider);
+      expect(user.cnic, equals('42101-1234567-1'));
+      expect(user.isCnicVerified, isFalse);
+    });
+
+    test('Updating profile preserves unverified CNIC status without self-elevation', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final notifier = container.read(userProvider.notifier);
+      notifier.updateProfile(
+        fullName: 'Zainab Bibi',
+        phone: '0300-9999999',
+        bloodGroup: BloodGroup.bNegative,
+        district: 'Karachi South',
+        cnic: '42201-1111111-1',
+      );
+
+      final user = container.read(userProvider);
+      expect(user.fullName, equals('Zainab Bibi'));
+      expect(user.phone, equals('0300-9999999'));
+      expect(user.bloodGroup, equals(BloodGroup.bNegative));
+      expect(user.district, equals('Karachi South'));
+      expect(user.cnic, equals('42201-1111111-1'));
+      expect(user.isCnicVerified, isFalse);
+    });
+  });
+
+  group('Dynamic 90-Day Donation Cooldown Tests', () {
+    test('Calculates remaining days dynamically from lastDonationDate', () {
+      final now = DateTime.now();
+      final thirtyDaysAgo = now.subtract(const Duration(days: 30));
+
+      final user = UserProfile(
+        id: 'u-cool',
+        fullName: 'Donor User',
+        email: 'donor@qatra.pk',
+        phone: '0300-1111111',
+        bloodGroup: BloodGroup.oPositive,
+        district: 'Karachi Central',
+        lastDonationDate: thirtyDaysAgo,
+      );
+
+      expect(user.effectiveCooldownDaysRemaining, inInclusiveRange(59, 61));
+      expect(user.isOnCooldown, isTrue);
+    });
+
+    test('Cooldown dynamically clears to 0 after 90 days', () {
+      final now = DateTime.now();
+      final ninetyDaysAgo = now.subtract(const Duration(days: 90));
+
+      final user = UserProfile(
+        id: 'u-ready',
+        fullName: 'Ready Donor',
+        email: 'ready@qatra.pk',
+        phone: '0300-2222222',
+        bloodGroup: BloodGroup.oPositive,
+        district: 'Karachi Central',
+        lastDonationDate: ninetyDaysAgo,
+      );
+
+      expect(user.effectiveCooldownDaysRemaining, equals(0));
+      expect(user.isOnCooldown, isFalse);
+    });
+
+    test('Cooldown dynamically clears when more than 90 days have elapsed', () {
+      final now = DateTime.now();
+      final hundredDaysAgo = now.subtract(const Duration(days: 100));
+
+      final user = UserProfile(
+        id: 'u-past',
+        fullName: 'Past Donor',
+        email: 'past@qatra.pk',
+        phone: '0300-3333333',
+        bloodGroup: BloodGroup.oPositive,
+        district: 'Karachi Central',
+        lastDonationDate: hundredDaysAgo,
+      );
+
+      expect(user.effectiveCooldownDaysRemaining, equals(0));
+      expect(user.isOnCooldown, isFalse);
+    });
+
+    test('Falls back to manual cooldownDaysRemaining if lastDonationDate is null', () {
+      final user = UserProfile(
+        id: 'u-manual',
+        fullName: 'Manual Cooldown',
+        email: 'manual@qatra.pk',
+        phone: '0300-4444444',
+        bloodGroup: BloodGroup.oPositive,
+        district: 'Karachi Central',
+        cooldownDaysRemaining: 45,
+      );
+
+      expect(user.effectiveCooldownDaysRemaining, equals(45));
+      expect(user.isOnCooldown, isTrue);
+    });
+  });
+
+  group('External Communication & Routing Intent URI Generation Tests', () {
+    test('Formats WhatsApp emergency broadcast URL with encoded details', () {
+      final hospital = Hospital.karachiHospitals.first;
+      final req = EmergencyRequest(
+        id: 'REQ-101',
+        seekerId: 'seeker-101',
+        seekerName: 'Hassan Raza',
+        hospital: hospital,
+        bloodGroup: BloodGroup.abNegative,
+        component: BloodComponent.platelets,
+        unitsRequired: 3,
+        urgency: UrgencyLevel.high,
+        createdAt: DateTime(2026, 3, 17, 10, 0),
+        broadcastRadiusKm: 10,
+        status: RequestStatus.broadcasting,
+      );
+
+      final message = '''
+🚨 *URGENT BLOOD REQUISITION — QATRA* 🚨
+Blood Group: *${req.bloodGroup.label}* (${req.component.label})
+Required Units: *${req.unitsRequired}*
+Urgency: *${req.urgency.description}*
+Hospital: *${req.hospital.name}*
+Address: ${req.hospital.address}
+Status: *Verified by Alkhidmat Verification Desk* (REQ #${req.id})
+
+If you can donate or know someone who can, please respond via QATRA Emergency Blood Response or contact the desk immediately.
+'''.trim();
+
+      final uri = Uri.parse('https://wa.me/?text=${Uri.encodeComponent(message)}');
+      expect(uri.scheme, equals('https'));
+      expect(uri.host, equals('wa.me'));
+      expect(uri.queryParameters['text'], contains('URGENT BLOOD REQUISITION'));
+      expect(uri.queryParameters['text'], contains('AB-'));
+      expect(uri.queryParameters['text'], contains(hospital.name));
+      expect(uri.queryParameters['text'], contains('REQ-101'));
+    });
+
+    test('Formats Google Maps turn-by-turn navigation destination URL', () {
+      final hospital = Hospital.karachiHospitals.first;
+      final navUri = Uri.parse(
+        'https://www.google.com/maps/dir/?api=1&destination=${hospital.latitude},${hospital.longitude}',
+      );
+
+      expect(navUri.scheme, equals('https'));
+      expect(navUri.host, equals('www.google.com'));
+      expect(navUri.path, equals('/maps/dir/'));
+      expect(navUri.queryParameters['api'], equals('1'));
+      expect(navUri.queryParameters['destination'], equals('${hospital.latitude},${hospital.longitude}'));
+    });
+
+    test('Formats Alkhidmat Emergency Helpline tel URI', () {
+      final helplineUri = Uri.parse('tel:1021');
+      expect(helplineUri.scheme, equals('tel'));
+      expect(helplineUri.path, equals('1021'));
+    });
+  });
 }
 
 

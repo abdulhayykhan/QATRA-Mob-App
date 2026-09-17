@@ -70,22 +70,45 @@ class UserNotifier extends StateNotifier<UserProfile> {
 
   UserNotifier({AuthRepository? authRepository})
       : _authRepository = authRepository,
-        super(UserProfile(
-          id: 'usr-default',
-          fullName: 'Abdul Hayy Khan',
-          email: 'abdulhayy.khan@duet.edu.pk',
-          phone: '+92 300 1234567',
-          bloodGroup: BloodGroup.oNegative,
-          district: 'Karachi South',
-          cnic: '42101-1234567-1',
-          isCnicVerified: false,
-          isAvailableToDonate: false,
-          cooldownDaysRemaining: 0,
-          livesSaved: 0,
-          role: UserRole.donor,
-          currentLat: 24.8607,
-          currentLng: 67.0011,
-        ));
+        super(_initialProfile(authRepository));
+
+  static UserProfile _initialProfile(AuthRepository? authRepo) {
+    final currentFirebaseUser = authRepo?.currentUser;
+    if (currentFirebaseUser != null) {
+      return UserProfile(
+        id: currentFirebaseUser.uid,
+        fullName: currentFirebaseUser.displayName ?? 'QATRA Member',
+        email: currentFirebaseUser.email ?? '',
+        phone: currentFirebaseUser.phoneNumber ?? '+92 300 1234567',
+        bloodGroup: BloodGroup.oNegative,
+        district: 'Karachi South',
+        cnic: null,
+        isCnicVerified: false,
+        isAvailableToDonate: false,
+        cooldownDaysRemaining: 0,
+        livesSaved: 0,
+        role: UserRole.donor,
+        currentLat: 24.8607,
+        currentLng: 67.0011,
+      );
+    }
+    return UserProfile(
+      id: '',
+      fullName: '',
+      email: '',
+      phone: '',
+      bloodGroup: BloodGroup.oNegative,
+      district: 'Karachi South',
+      cnic: null,
+      isCnicVerified: false,
+      isAvailableToDonate: false,
+      cooldownDaysRemaining: 0,
+      livesSaved: 0,
+      role: UserRole.guest,
+      currentLat: 24.8607,
+      currentLng: 67.0011,
+    );
+  }
 
   Future<bool> signInWithGoogle({required UserRole initialRole}) async {
     if (_authRepository == null) return false;
@@ -99,6 +122,28 @@ class UserNotifier extends StateNotifier<UserProfile> {
     } catch (_) {
       return false;
     }
+  }
+
+  Future<void> signOut() async {
+    if (_authRepository != null) {
+      await _authRepository.signOut();
+    }
+    state = UserProfile(
+      id: '',
+      fullName: '',
+      email: '',
+      phone: '',
+      bloodGroup: BloodGroup.oNegative,
+      district: 'Karachi South',
+      cnic: null,
+      isCnicVerified: false,
+      isAvailableToDonate: false,
+      cooldownDaysRemaining: 0,
+      livesSaved: 0,
+      role: UserRole.guest,
+      currentLat: 24.8607,
+      currentLng: 67.0011,
+    );
   }
 
   void loginWithGoogle({
@@ -127,7 +172,6 @@ class UserNotifier extends StateNotifier<UserProfile> {
   void verifyCnic(String cnic) {
     state = state.copyWith(
       cnic: cnic,
-      isCnicVerified: true,
     );
     if (_authRepository != null && state.id.isNotEmpty) {
       _authRepository.updateCnic(uid: state.id, cnic: cnic);
@@ -138,14 +182,16 @@ class UserNotifier extends StateNotifier<UserProfile> {
     required String fullName,
     required BloodGroup bloodGroup,
     required String district,
+    String? phone,
     String? cnic,
   }) {
     state = state.copyWith(
       fullName: fullName,
       bloodGroup: bloodGroup,
       district: district,
+      phone: phone ?? state.phone,
       cnic: cnic,
-      isCnicVerified: cnic != null && cnic.isNotEmpty,
+      isCnicVerified: state.isCnicVerified,
     );
     _syncToFirestore();
   }

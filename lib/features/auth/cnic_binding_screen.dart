@@ -14,11 +14,17 @@ class CnicBindingScreen extends ConsumerStatefulWidget {
 }
 
 class _CnicBindingScreenState extends ConsumerState<CnicBindingScreen> {
-  final TextEditingController _cnicController =
-      TextEditingController(text: '42101-1234567-1');
-  bool _frontUploaded = true;
-  bool _backUploaded = true;
+  late final TextEditingController _cnicController;
+  bool _frontUploaded = false;
+  bool _backUploaded = false;
   String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    final currentCnic = ref.read(userProvider).cnic ?? '';
+    _cnicController = TextEditingController(text: currentCnic);
+  }
 
   @override
   void dispose() {

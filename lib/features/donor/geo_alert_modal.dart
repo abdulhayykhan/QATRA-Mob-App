@@ -6,6 +6,7 @@ import '../../core/utils/distance_calculator.dart';
 import '../../providers/app_state_providers.dart';
 import '../../widgets/qatra_logo.dart';
 import '../map/live_map_screen.dart';
+import '../map/navigation_routing_screen.dart';
 
 class GeoAlertModal extends ConsumerWidget {
   final EmergencyRequest request;
@@ -176,14 +177,30 @@ class GeoAlertModal extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
 
-            // View on Live Map Button
+            // Primary Action: Accept Dispatch & Route
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(context); // Close dialog
+                final donorRecord = MatchedDonor(
+                  id: user.id.isNotEmpty ? user.id : 'donor-me',
+                  donorName: user.fullName.isNotEmpty ? user.fullName : 'Verified Donor',
+                  bloodGroup: request.bloodGroup,
+                  distanceKm: distanceKm,
+                  etaMinutes: etaMinutes,
+                  status: 'Accepted Dispatch',
+                  phoneNumber: user.phone,
+                );
+                ref.read(emergencyRequestsRepositoryProvider).acceptDispatch(
+                  requestId: request.id,
+                  donor: donorRecord,
+                );
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => LiveMapScreen(initialRequest: request),
+                    builder: (_) => NavigationRoutingScreen(
+                      request: request,
+                      donor: donorRecord,
+                    ),
                   ),
                 );
               },
@@ -196,13 +213,41 @@ class GeoAlertModal extends ConsumerWidget {
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.map_rounded, size: 18),
+                  Icon(Icons.directions_run_rounded, size: 20),
                   SizedBox(width: 8),
-                  Text('View on Live Map', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                  Text('Accept Dispatch & Route', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
             const SizedBox(height: 10),
+
+            // Secondary Action: View on Live Map
+            OutlinedButton(
+              onPressed: () {
+                Navigator.pop(context); // Close dialog
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => LiveMapScreen(initialRequest: request),
+                  ),
+                );
+              },
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.primaryRed,
+                side: const BorderSide(color: AppColors.primaryRed),
+                minimumSize: const Size.fromHeight(46),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.map_rounded, size: 18),
+                  SizedBox(width: 8),
+                  Text('View on Live Map', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
 
             // Dismiss Button
             TextButton(

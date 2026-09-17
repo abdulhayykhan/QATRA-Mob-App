@@ -120,7 +120,6 @@ class AuthRepository {
       try {
         await _firestore.collection('users').doc(uid).update({
           'cnic': cnic,
-          'isCnicVerified': true,
         });
       } catch (e) {
         debugPrint('AuthRepository.updateCnic error: $e');

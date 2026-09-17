@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/models/blood_models.dart';
 import '../../core/models/user_models.dart';
 import '../../core/theme/app_theme.dart';
@@ -409,14 +410,7 @@ class _SocialFeedScreenState extends ConsumerState<SocialFeedScreen> {
                 IconButton(
                   icon: const Icon(Icons.share_outlined, color: AppColors.textDark),
                   tooltip: 'Share formatted card',
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Verified blood request copied for WhatsApp sharing.'),
-                        backgroundColor: Color(0xFF25D366),
-                      ),
-                    );
-                  },
+                  onPressed: () => _shareToWhatsApp(req),
                 ),
               ],
             ),
@@ -424,6 +418,34 @@ class _SocialFeedScreenState extends ConsumerState<SocialFeedScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _shareToWhatsApp(EmergencyRequest req) async {
+    final message = '''
+🚨 *URGENT BLOOD REQUISITION — QATRA* 🚨
+Blood Group: *${req.bloodGroup.label}* (${req.component.label})
+Required Units: *${req.unitsRequired}*
+Urgency: *${req.urgency.description}*
+Hospital: *${req.hospital.name}*
+Address: ${req.hospital.address}
+Status: *Verified by Alkhidmat Verification Desk* (REQ #${req.id})
+
+If you can donate or know someone who can, please respond via QATRA Emergency Blood Response or contact the desk immediately.
+'''.trim();
+
+    final uri = Uri.parse('https://wa.me/?text=${Uri.encodeComponent(message)}');
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not open WhatsApp. Request details copied.'),
+            backgroundColor: Color(0xFF25D366),
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildAwarenessCard(MythFact mf) {
